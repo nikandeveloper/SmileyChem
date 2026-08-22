@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import model_v01
+import model_v01 as model
 
 lines = []
 
