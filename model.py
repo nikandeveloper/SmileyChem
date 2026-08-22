@@ -32,87 +32,21 @@ class Encoder(nn.Module):
   def __init__(self, input_size, hidden_size, hidden_n, embedding_size):
     super().__init__()
     self.rnn = DeepRNN(input_size, hidden_size, hidden_n, embedding_size)
-
   def forward(self, x, h):
-    outputs = []
-
     for t in range(x.size(0)):
       h = self.rnn(x[t], h)
-      outputs.append(h)
-    
-    return outputs
 
-
-class Attention(nn.Module):
-   def __init__(self, hidden_size):
-      super().__init__()
-
-      self.hidden_size = hidden_size
-
-      self.Lh = nn.Linear(hidden_size, hidden_size)
-      self.Lst = nn.Linear(hidden_size, hidden_size)
-      self.Lv = nn.Linear(hidden_size, 1)
-
-
-   def forward(self, hiddens, st):
-      scores = []
-      c_st = self.Lst(st)
-      for i in range(len(hiddens)):
-        c_h = self.Lh(hiddens[i])
-        combined = c_st + c_h
-        activated = torch.tanh(combined)
-        score_i = self.Lv(activated)
-        scores.append(score_i)      
-
-      scores = torch.stack(scores)
-
-      scores = scores.squeeze(1)  
-
-      scores = torch.softmax(scores, dim=0)
-
-      vector = torch.zeros_like(st)
-
-      for k in range(len(hiddens)):
-         vector += hiddens[k] * scores[k]
-
-      return vector   
-
-
-class DecoderDeepRNN(nn.Module):
-  def __init__(self, input_size, hidden_size, hidden_n, embedding_size):
-      super().__init__()
-
-      self.embedding = nn.Embedding(input_size,embedding_size)
-      
-      layers = []
-      
-      layers.append(nn.Linear(embedding_size + hidden_size*2, hidden_size))
-      layers.append(nn.ReLU())
-      
-      for _ in range(hidden_n - 2):
-          layers.append(nn.Linear(hidden_size, hidden_size))
-          layers.append(nn.ReLU())
-      
-      layers.append(nn.Linear(hidden_size, hidden_size))
-
-      self.network = nn.Sequential(*layers)
-
-  def forward(self, x, h, context):
-      x = self.embedding(x)
-      combined = torch.cat([x, h, context], dim=0)
-      h = self.network(combined)
-
-      return h
+    return h
 
 
 class Decoder(nn.Module):
   def __init__(self, input_size, hidden_size, hidden_n, embedding_size):
     super().__init__()
-    self.rnn = DecoderDeepRNN(input_size, hidden_size, hidden_n, embedding_size)
+    self.rnn = DeepRNN(input_size, hidden_size, hidden_n, embedding_size)
     self.output = nn.Linear(hidden_size, input_size)
   
-  def forward(self, h, x, context):
-    h = self.rnn(x, h, context)
+  def forward(self, h, x):
+    h = self.rnn(x, h)
     x = self.output(h)
 
     return h, x
@@ -123,6 +57,7 @@ class Seq2Seq(nn.Module):
   def __init__(
     self, 
     input_size,
+    output_size,
     hidden_size,
     hidden_n,
     embedding_size,
@@ -137,8 +72,6 @@ class Seq2Seq(nn.Module):
         hidden_n,
         embedding_size
      )
-
-      self.attention = Attention(hidden_size)
 
      self.decoder = Decoder(
         input_size,
@@ -158,10 +91,7 @@ class Seq2Seq(nn.Module):
         device=src.device 
      )
 
-     all_hidden = self.encoder(src, h)
-
-     h = all_hidden[-1]
-
+     h = self.encoder(src, h)
      decoder_input = torch.tensor(
         self.sos_token,
         dtype=torch.long,
@@ -170,8 +100,7 @@ class Seq2Seq(nn.Module):
      outputs = []
 
      for _ in range(100):
-      context = self.attention(all_hidden, h)
-      h, logits = self.decoder(h, decoder_input, context)
+      h, logits = self.decoder(h, decoder_input)
       outputs.append(logits)
 
       decoder_input = logits.argmax(dim=0)
@@ -184,17 +113,15 @@ class Seq2Seq(nn.Module):
   def train_step(self, src, trg):
      h = torch.zeros(self.hidden_size, device=src.device)
 
-     all_hidden = self.encoder(src, h)
-
-     h = all_hidden[-1]
+     h = self.encoder(src, h)
 
      decoder_input = trg[0]
 
      outputs = []
 
      for t in range(1, trg.size(0)):
-        context = self.attention(all_hidden, h)
-        h, logits = self.decoder(h, decoder_input, context)
+        
+        h, logits = self.decoder(h, decoder_input)
         outputs.append(logits)
 
         decoder_input = trg[t]
