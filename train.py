@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import deeprnn
+import model_v01
 
 lines = []
 
