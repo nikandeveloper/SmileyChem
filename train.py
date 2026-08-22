@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import model_v01
+import model
 
 lines = []
 
@@ -9,7 +9,7 @@ out_side = []
 
 vocab = {}
 
-with open("CHEM.txt", "r") as file:
+with open("reaction_database.txt", "r") as file:
   for line in file:
     print(line)
     i, o = line.rstrip("\n").split(">>")[0], line.rstrip("\n").split(">>")[1]
@@ -31,7 +31,7 @@ with open("CHEM.txt", "r") as file:
 
 vol = len(vocab)
 
-model = deeprnn.Seq2Seq(vol+2, vol+2, 256, 4, 128, vol, vol+1)
+model = model.Seq2Seq(vol+2, 256, 4, 128, vol, vol+1)
 
 criteron = nn.CrossEntropyLoss()
 
