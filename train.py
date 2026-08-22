@@ -11,7 +11,6 @@ vocab = {}
 
 with open("reaction_database.txt", "r") as file:
   for line in file:
-    print(line)
     i, o = line.rstrip("\n").split(">>")[0], line.rstrip("\n").split(">>")[1]
     mi = []
     mo = []
