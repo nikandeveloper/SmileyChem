@@ -208,7 +208,7 @@ class Seq2Seq(nn.Module):
          combined = torch.cat((all_hidden_normal[i], all_hidden_reverse[i]), dim=0)
          all_hidden.append(combined)
          
-     h = self.decoder_init(all_hidden[-1])
+     h = self.decoding_init(all_hidden[-1])
 
      decoder_input = trg[0]
 
