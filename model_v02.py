@@ -141,6 +141,13 @@ class Seq2Seq(nn.Module):
         embedding_size
      )
 
+     self.encoder_backward = Encoder(
+        input_size,
+        hidden_size,
+        hidden_n,
+        embedding_size
+     )
+
      self.attention = Attention(hidden_size)
 
      self.decoder = Decoder(
@@ -164,7 +171,7 @@ class Seq2Seq(nn.Module):
 
 
      all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder(src.flip(0), h)
+     all_hidden_reverse = self.encoder_backward(src.flip(0), h)
      all_hidden_reverse.reverse()
 
      all_hidden = []
@@ -199,7 +206,7 @@ class Seq2Seq(nn.Module):
 
      
      all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder(src.flip(0), h)
+     all_hidden_reverse = self.encoder_backward(src.flip(0), h)
      all_hidden_reverse.reverse()
 
      all_hidden = []
