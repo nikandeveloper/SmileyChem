@@ -63,3 +63,6 @@ with torch.no_grad():
 
 print("Predicted tokens")
 print(predicted_tokens)
+
+
+torch.save(model.state_dict(), "model.pth")
