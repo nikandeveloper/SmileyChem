@@ -1,0 +1,6 @@
+attention system was implemented.
+
+now the encoder gives all of its hidden states h1, h2, h3... hn (n is the length of the tokens). 
+The attention system gives these each a score and creates a context vector based on 
+the hidden_state of the decoder and these values which is then given to the decoder for it along with 
+the other values such as the predicted token and the new hidden state 
