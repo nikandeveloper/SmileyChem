@@ -1,5 +1,6 @@
 A bidirectional encoder implemented to further reduce the model from forgetting tokens
 and counter the down sides of the simple MLP RNN or as i like to call it DeepRNN
 
-an improved tokeniser which is coded by AI however the architecture and the idea was mine
-is also used to account for things like Cl and se in the SMILES format
+an improved tokeniser which is coded with AI assistance is also used to account for tokens like Cl and se in SMILES format
+However the architecture and the core idea behind it was mine
+
