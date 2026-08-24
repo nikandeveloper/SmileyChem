@@ -6,9 +6,12 @@ This project's goal was to see if a simple DeepRNN using an Encoder-Decoder appr
 
 
 
+
 Install dependencies:
 
 pip install -r requirements.txt
+
+
 
 
 
@@ -16,15 +19,24 @@ How to use:
 
 The file model.py contains the classes DeepRNN, Encoder, Decoder and Seq2Seq and is the core of the model.
 
-The file train.py does the training (however it does not save the weights and biases yet).
+The file train.py does the training and saves the model in model.pth or model_v01.pth or model_v02.pth depending on the version.
 
 The file database.txt is a small dataset of simple chemical reactions in SMILES format.
+
+The files are in the corresponding folder v00, v01..
+
+In the version v02 a file tokeniser.py is added to improve tokenisation
+
+In order to use the saved model you just load it using torch:
+  model = torch.load("model.pth", weights_only=False)
+
 
 
 
 Technologies used:
 
 This Python-based project only uses PyTorch and some built-in Python libraries.
+
 
 
 
