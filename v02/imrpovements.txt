@@ -1,0 +1,2 @@
+A bidirectional encoder implemented to further reduce the model from forgetting tokens
+and counter the down sides of the simple MLP RNN or as i like to call it DeepRNN
