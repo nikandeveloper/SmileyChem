@@ -1,4 +1,4 @@
-SmileyChem
+#SmileyChem
 
 SmileyChem is a Seq2Seq AI model using PyTorch that predicts the result of chemical reactions based on their reactants in SMILES format.
 
@@ -7,15 +7,14 @@ This project's goal was to see if a simple DeepRNN using an Encoder-Decoder appr
 
 
 
-Install dependencies:
+##Install dependencies:
 
 pip install -r requirements.txt
 
 
 
 
-
-How to use:
+##How to use:
 
 The file model.py contains the classes DeepRNN, Encoder, Decoder and Seq2Seq and is the core of the model.
 
@@ -33,7 +32,7 @@ In order to use the saved model you just load it using torch:
 
 
 
-Technologies used:
+##Technologies used:
 
 This Python-based project only uses PyTorch and some built-in Python libraries.
 
