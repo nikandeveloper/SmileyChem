@@ -24,6 +24,7 @@ if torch.cuda.is_available():
 
 
 reactions_file = Path(__file__).parent / PICKELED_REACTION_DATABASE_FILE_NAME
+model_file = Path(__file__).parent / PTH_MODEL_NAME
 
 if reactions_file.is_file():
 
