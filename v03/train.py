@@ -61,7 +61,7 @@ if model_file.is_file():
 else:
   print(f"File {PTH_MODEL_NAME} does not existing. Making new model...")
 
-
+model.to(device)
 
 
 criteron = nn.CrossEntropyLoss()
