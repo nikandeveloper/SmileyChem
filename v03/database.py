@@ -46,5 +46,5 @@ class Database:
 
 
   def nums_mapping(self):
-    self.mapping_nums = [validation.get_mapping_nums_reaction(reaction) for reaction in self.reactions]
+    self.mapping_nums = [validation.get_map_nums_reaction(reaction) for reaction in self.reactions]
 
