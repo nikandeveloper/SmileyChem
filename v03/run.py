@@ -42,7 +42,7 @@ else:
 
 vocab_size = t.SmilesReader.vocab_size()
 
-model = md.Seq2Seq(vocab_size+2, 256, 4, 128, vocab_size, vocab_size+1)
+model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
 
 if model_file.is_file():
   try:
@@ -55,7 +55,7 @@ if model_file.is_file():
 else:
   raise ValueError(f"This file does not exist: {PTH_MODEL_NAME}")
 
-criteron = nn.CrossEntropyLoss()
+criteron = nn.CrossEntropyLoss(ignore_index=-100)
 
 examine_loss = 0
 
@@ -65,7 +65,13 @@ for u in range(len(database.reactions)):
 
   logits = model.forward(src)
 
-  loss = criteron(logits, trg[1:])
+  if logits.shape[0] < trg[1:].shape[0]:
+    pad = torch.full((trg[1:].shape[0] - logits.shape[0],), -100, dtype=trg.dtype, device=trg.device)
+    new_target = torch.cat([trg[1:], pad])
+  else:
+    new_target = trg[1:logits.shape[0]]
+
+  loss = criteron(logits, new_target)
 
   examine_loss += loss.item()
 
