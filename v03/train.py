@@ -6,6 +6,7 @@ import parser
 import validation
 import database as db
 import pickle
+import time
 from pathlib import Path
 
 
@@ -13,6 +14,17 @@ from pathlib import Path
 CSV_RAW_REACTIONS_FILE_NAME = "raw_test.csv"
 PICKELED_REACTION_DATABASE_FILE_NAME = "reactions.db"
 PTH_MODEL_NAME = "model.pth"
+
+CHECKPOINT_DIR = Path("checkpoint")
+CHECKPOINT_DIR.mkdir(exist_ok=True)
+
+CHECKPOINT_LENGTH = 10 * 60 #assuming time in seconds
+
+
+starting_epoch = 0
+starting_reaction = 0
+EPOCHS = 100
+
 
 
 
@@ -48,7 +60,7 @@ else:
 vocab_size = t.SmilesReader.vocab_size()
 
 
-model = md.Seq2Seq(vocab_size+2, 256, 4, 128, vocab_size, vocab_size+1)
+model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
 
 if model_file.is_file():
   try:
@@ -66,14 +78,16 @@ model.to(device)
 
 criteron = nn.CrossEntropyLoss()
 
-optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
+optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
 
 model.train()
 
+last_checkpoint = time.time()
 
-for epoch in range(10):
+
+for epoch in range(starting_epoch, EPOCHS):
   examine_loss = 0
-  for u in range(len(database.reactions)):
+  for u in range(starting_reaction, len(database.reactions)):
    src = database.reactions[u].reactants_tokens
    trg = torch.cat([torch.tensor([vocab_size]),database.reactions[u].products_tokens, torch.tensor([vocab_size+1])])
    optimiser.zero_grad()
@@ -93,7 +107,18 @@ for epoch in range(10):
 
    optimiser.step()
 
-  print(epoch, examine_loss)
+   if time.time() - last_checkpoint >= CHECKPOINT_LENGTH:
+     check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_reaction_{u}.pth"
+     saved_data = {"epoch": epoch, "reaction": u, "model_state_dict": model.state_dict(),  "optimiser_state_dict": optimiser.state_dict(), "loss": loss.item()}
+
+     torch.save(saved_data, check_point_file)
+
+     print(f"saved checkpoint: {check_point_file}")
+     print(f"Loss: {loss.item()}")
+
+     last_checkpoint = time.time()
+
+
 
 
 torch.save(model.state_dict(), "model.pth")
