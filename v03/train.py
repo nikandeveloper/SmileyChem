@@ -7,6 +7,8 @@ import validation
 import database as db
 import pickle
 import time
+import torch_xla
+import torch_xla.core.xla_model as xlam
 from pathlib import Path
 
 
@@ -30,11 +32,13 @@ ignoring_index = -100
 
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 if torch.cuda.is_available():
   print(torch.cuda.get_device_name(0))
+"""
 
+device = xlam.xla_device()
 
 
 reactions_file = Path(__file__).parent / PICKELED_REACTION_DATABASE_FILE_NAME
@@ -118,7 +122,8 @@ for epoch in range(EPOCHS):
 
    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
-   optimiser.step()
+   xlam.optimizer_step(optimiser)
+   xlam.mark_step()
 
    if time.time() - last_checkpoint >= CHECKPOINT_LENGTH:
      check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}.pth"
