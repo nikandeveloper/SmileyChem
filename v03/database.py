@@ -10,8 +10,8 @@ ignore = "id,class,reactants>reagents>production\n"
 @dataclass
 class Database:
   file_name: str
-  ignore_line: str | None = None
   size_bucket: int
+  ignore_line: str | None = None
 
 
   reactions: list[Reaction] = field(default_factory=list)
