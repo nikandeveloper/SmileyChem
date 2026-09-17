@@ -22,7 +22,7 @@ class DeepRNN(nn.Module):
 
   def forward(self, x, h):
       x = self.embedding(x)
-      combined = torch.cat([x, h], dim=0)
+      combined = torch.cat([x, h], dim=1)
       h = self.network(combined)
 
       return h
@@ -33,14 +33,16 @@ class Encoder(nn.Module):
     super().__init__()
     self.rnn = DeepRNN(input_size, hidden_size, hidden_n, embedding_size)
 
+
   def forward(self, x, h):
     outputs = []
 
-    for t in range(x.size(0)):
-      h = self.rnn(x[t], h)
+    for t in range(x.size(1)):
+      h = self.rnn(x[:, t], h)
       outputs.append(h)
-    
-    return outputs
+ 
+    return torch.stack(outputs, dim=1)
+
 
 
 class Attention(nn.Module):
@@ -57,25 +59,19 @@ class Attention(nn.Module):
 
 
    def forward(self, hiddens, st):
-      scores = []
       c_st = self.Lst(st)
-      for i in range(len(hiddens)):
-        c_h = self.Lh(hiddens[i])
-        combined = c_st + c_h
-        activated = torch.tanh(combined)
-        score_i = self.Lv(activated)
-        scores.append(score_i)      
 
-      scores = torch.stack(scores)
+      c_h = self.Lh(hiddens)
+      
+      combined = c_st.unsqueeze(1) + c_h
+      
+      activated = torch.tanh(combined)
 
-      scores = scores.squeeze(1)  
+      scores = self.Lv(activated).squeeze(-1)
+     
+      scores = torch.softmax(scores, dim=1)
 
-      scores = torch.softmax(scores, dim=0)
-
-      vector = torch.zeros_like(st)
-
-      for k in range(len(hiddens)):
-         vector += self.Lcontext(hiddens[k]) * scores[k]
+      vector = torch.sum(self.Lcontext(hiddens) * scores.unsqueeze(-1), 1)
 
       return vector   
 
@@ -101,7 +97,7 @@ class DecoderDeepRNN(nn.Module):
 
   def forward(self, x, h, context):
       x = self.embedding(x)
-      combined = torch.cat([x, h, context], dim=0)
+      combined = torch.cat([x, h, context], dim=-1)
       h = self.network(combined)
 
       return h
@@ -165,24 +161,22 @@ class Seq2Seq(nn.Module):
 
   def forward(self, src):
      h = torch.zeros(
+        src.size(0),
         self.hidden_size,
         device=src.device 
      )
-
-
+     
      all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder_backward(src.flip(0), h)
-     all_hidden_reverse.reverse()
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h)
+     all_hidden_reverse = all_hidden_reverse.flip(1)
 
-     all_hidden = []
 
-     for i in range(len(all_hidden_normal)):
-         combined = torch.cat((all_hidden_normal[i], all_hidden_reverse[i]), dim=0)
-         all_hidden.append(combined)
+     all_hidden = torch.cat((all_hidden_normal, all_hidden_reverse), dim=-1)
+     
+     h = self.decoding_init(all_hidden[:, -1, :])
 
-     h = self.decoding_init(all_hidden[-1])
-
-     decoder_input = torch.tensor(
+     decoder_input = torch.full(
+        (src.size(0),),
         self.sos_token,
         dtype=torch.long,
         device=src.device)
@@ -194,38 +188,34 @@ class Seq2Seq(nn.Module):
       h, logits = self.decoder(h, decoder_input, context)
       outputs.append(logits)
 
-      decoder_input = logits.argmax(dim=0)
+      decoder_input = logits.argmax(dim=1)
 
-      if decoder_input.item() == self.eos_token:
-        break
-
-     return torch.stack(outputs, dim=0)
+     return torch.stack(outputs, dim=1)
 
   def train_step(self, src, trg):
-     h = torch.zeros(self.hidden_size, device=src.device)
+     h = torch.zeros(src.size(0) ,self.hidden_size, device=src.device)
 
      
      all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder_backward(src.flip(0), h)
-     all_hidden_reverse.reverse()
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h)
+     all_hidden_reverse = all_hidden_reverse.flip(1)
 
-     all_hidden = []
 
-     for i in range(len(all_hidden_normal)):
-         combined = torch.cat((all_hidden_normal[i], all_hidden_reverse[i]), dim=0)
-         all_hidden.append(combined)
+     all_hidden = torch.cat((all_hidden_normal, all_hidden_reverse), dim=-1)
+     
          
-     h = self.decoding_init(all_hidden[-1])
+     h = self.decoding_init(all_hidden[:, -1, :])
 
-     decoder_input = trg[0]
+     decoder_input = trg[:, 0]
 
      outputs = []
 
-     for t in range(1, trg.size(0)):
+     for t in range(1, trg.size(1)):
         context = self.attention(all_hidden, h)
         h, logits = self.decoder(h, decoder_input, context)
         outputs.append(logits)
 
-        decoder_input = trg[t]
+        decoder_input = trg[:, t]
 
-     return torch.stack(outputs)
+     return torch.stack(outputs, dim=1)
+
