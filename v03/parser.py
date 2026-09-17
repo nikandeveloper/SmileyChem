@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import torch
 import tokeniser
+import torch.nn.functional as f
 
 @dataclass
 class Reaction:
@@ -23,6 +24,12 @@ class Reaction:
     reagants_tokens: torch.Tensor = field(default_factory=torch.Tensor)
     products_tokens: torch.Tensor = field(default_factory=torch.Tensor)
 
+    padded_tokens: torch.Tensor = field(default_factory=torch.Tensor)
+
+    max_len: int | None = None
+
+    key: int | None = None
+
 
     def tokenise(self):
         reader_reactant = tokeniser.SmilesReader(self.reactants_canonical)
@@ -33,7 +40,16 @@ class Reaction:
         self.reagants_tokens = torch.tensor(reader_reagant.tokenise())
         self.products_tokens = torch.tensor(reader_product.tokenise())
 
+        self.max_len = max(len(self.reactants_tokens), len(self.products_tokens))
+
         return self
+
+
+    def pad(self, padding: int, size: int) -> torch.Tensor:
+        self.reactants_tokens = f.pad(self.reactants_tokens, (0, size - len(self.reactants_tokens)), value=0)
+        self.products_tokens = f.pad(self.products_tokens, (0, size - len(self.products_tokens)), value=0)
+
+        return torch.stack([self.reactants_tokens, self.products_tokens])
 
 
     def CanonicaltoString(self) -> None | str:
