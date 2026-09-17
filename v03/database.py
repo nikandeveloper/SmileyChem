@@ -44,9 +44,9 @@ class Database:
   def add_marking_codes(self, EOS, SOS):
     for key in database.bucket_dict_reactant.keys():
         database.bucket_dict_product[key] = torch.cat([
-          src.new_full((src.size(0), 1), SOS),
+          database.bucket_dict_product[key].new_full((database.bucket_dict_product[key].size(0), 1), SOS),
           database.bucket_dict_product[key],    
-          src.new_full((src.size(0), 1), EOS)
+          database.bucket_dict_product[key].new_full((database.bucket_dict_product[key].size(0), 1), EOS)
         ], dim=1)
    
 
