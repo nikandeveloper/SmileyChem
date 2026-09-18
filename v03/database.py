@@ -8,7 +8,7 @@ import torch
 ignore = "id,class,reactants>reagents>production\n"
 
 @dataclass
-class Database:
+class self:
   file_name: str
   size_bucket: int
   ignore_line: str | None = None
@@ -42,11 +42,11 @@ class Database:
         self.reactions.append(reaction)
 
   def add_marking_codes(self, EOS, SOS):
-    for key in database.bucket_dict_reactant.keys():
-        database.bucket_dict_product[key] = torch.cat([
-          database.bucket_dict_product[key].new_full((database.bucket_dict_product[key].size(0), 1), SOS),
-          database.bucket_dict_product[key],    
-          database.bucket_dict_product[key].new_full((database.bucket_dict_product[key].size(0), 1), EOS)
+    for key in self.bucket_dict_reactant.keys():
+        self.bucket_dict_product[key] = torch.cat([
+          self.bucket_dict_product[key].new_full((self.bucket_dict_product[key].size(0), 1), SOS),
+          self.bucket_dict_product[key],    
+          self.bucket_dict_product[key].new_full((self.bucket_dict_product[key].size(0), 1), EOS)
         ], dim=1)
    
 
