@@ -8,7 +8,7 @@ import torch
 ignore = "id,class,reactants>reagents>production\n"
 
 @dataclass
-class self:
+class Database:
   file_name: str
   size_bucket: int
   ignore_line: str | None = None
