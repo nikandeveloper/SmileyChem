@@ -16,6 +16,7 @@ from pathlib import Path
 CSV_RAW_REACTIONS_FILE_NAME = "raw_train.csv"
 PICKELED_REACTION_DATABASE_FILE_NAME = "reactions.db"
 PTH_MODEL_NAME = "model.pth"
+BUCKET_SIZE = 10
 
 
 CHECKPOINT_DIR = Path("checkpoint")
@@ -56,7 +57,7 @@ if reactions_file.is_file():
 
 else:
 
-  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, db.ignore)
+  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, BUCKET_SIZE, db.ignore)
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
