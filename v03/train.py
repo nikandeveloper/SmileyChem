@@ -117,7 +117,7 @@ for epoch in range(EPOCHS):
 
    logits = model.train_step(src, trg)
 
-   loss = criteron(logits, trg[1:])
+   loss = criteron(logits.transpose(1,2), trg[:, 1:])
 
    examine_loss += loss.item()
 
