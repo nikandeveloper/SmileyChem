@@ -11,15 +11,17 @@ ignore = "id,class,reactants>reagents>production\n"
 class Database:
   file_name: str
   size_bucket: int
+  size_batch: int
   ignore_line: str | None = None
 
 
   reactions: list[Reaction] = field(default_factory=list)
 
-  bucket_dict_reactant: dict[int ,torch.Tensor] = field(default_factory=dict)
-  bucket_dict_product: dict[int ,torch.Tensor] = field(default_factory=dict)
+  bucket_dict_reactant: dict[int ,list[torch.Tensor]] = field(default_factory=dict)
+  bucket_dict_product: dict[int ,list[torch.Tensor]] = field(default_factory=dict)
 
   len_bucket_dict: dict[int ,list[int]] = field(default_factory=dict)
+  batch_avai_bucket_dict: dict[int ,list[int]] = field(default_factory=dict)
 
   mapping_nums: list[tuple[set[int], set[int], set[int]]] = field(default_factory=list)
 
@@ -28,7 +30,7 @@ class Database:
     with open(self.file_name, "r") as file:
       id_num = 0
       for line_raw in file:
-       if line_raw != self.ignore_line:
+       if id_num != 0:
         line = line_raw.split(",")[2]
         if line.strip():
             id_num += 1
@@ -40,13 +42,18 @@ class Database:
         reaction = validation.validate_reaction(reaction)
 
         self.reactions.append(reaction)
+       else:
+        id_num += 1 
+        continue
+
 
   def add_marking_codes(self, EOS, SOS):
     for key in self.bucket_dict_reactant.keys():
-        self.bucket_dict_product[key] = torch.cat([
-          self.bucket_dict_product[key].new_full((self.bucket_dict_product[key].size(0), 1), SOS),
-          self.bucket_dict_product[key],    
-          self.bucket_dict_product[key].new_full((self.bucket_dict_product[key].size(0), 1), EOS)
+      for i, element in enumerate(self.bucket_dict_product[key]):
+        self.bucket_dict_product[key][i] = torch.cat([
+          element.new_full((element.size(0), 1), SOS),
+          element,    
+          element.new_full((element.size(0), 1), EOS)
         ], dim=1)
    
 
@@ -59,8 +66,36 @@ class Database:
     for reaction in self.reactions:
       reaction.padded_tokens = reaction.pad(padding, max(self.len_bucket_dict[reaction.key]))
 
-      self.bucket_dict_reactant[reaction.key] = (reaction.padded_tokens[0].unsqueeze(0) if self.bucket_dict_reactant.get(reaction.key) is None else torch.cat([self.bucket_dict_reactant[reaction.key], reaction.padded_tokens[0].unsqueeze(0)], dim=0))
-      self.bucket_dict_product[reaction.key] = (reaction.padded_tokens[1].unsqueeze(0) if self.bucket_dict_product.get(reaction.key) is None else torch.cat([self.bucket_dict_product[reaction.key], reaction.padded_tokens[1].unsqueeze(0)], dim=0))
+      self.add_padded_tokens(reaction.key, reaction.padded_tokens)
+
+      
+  def add_padded_tokens(self, key, padded_tokens):
+    if key in self.batch_avai_bucket_dict and self.batch_avai_bucket_dict[key]:
+      if self.batch_avai_bucket_dict[key][-1] < self.size_batch:
+        self.batch_avai_bucket_dict[key][-1] += 1
+      else:
+        self.batch_avai_bucket_dict[key].append(1)
+    else:
+      self.batch_avai_bucket_dict[key] = [1]
+
+    if self.bucket_dict_reactant.get(key) is None:
+      self.bucket_dict_reactant[key] = [padded_tokens[0].unsqueeze(0)] 
+
+    elif len(self.bucket_dict_reactant[key]) < len(self.batch_avai_bucket_dict[key]):
+      self.bucket_dict_reactant[key].append(padded_tokens[0].unsqueeze(0)) 
+
+    else:  
+      self.bucket_dict_reactant[key][(len(self.batch_avai_bucket_dict[key]) - 1)]  =  torch.cat([self.bucket_dict_reactant[key][(len(self.batch_avai_bucket_dict[key]) - 1)], padded_tokens[0].unsqueeze(0)], dim=0)
+
+
+    if self.bucket_dict_product.get(key) is None:
+      self.bucket_dict_product[key] = [padded_tokens[1].unsqueeze(0)]
+
+    elif len(self.bucket_dict_product[key]) < len(self.batch_avai_bucket_dict[key]):
+      self.bucket_dict_product[key].append(padded_tokens[1].unsqueeze(0))
+
+    else:
+      self.bucket_dict_product[key][(len(self.batch_avai_bucket_dict[key]) - 1)]   =  torch.cat([self.bucket_dict_product[key][(len(self.batch_avai_bucket_dict[key]) - 1)], padded_tokens[1].unsqueeze(0)], dim=0)
 
 
 
@@ -90,4 +125,3 @@ class Database:
 
   def nums_mapping(self):
     self.mapping_nums = [validation.get_map_nums_reaction(reaction) for reaction in self.reactions]
-
