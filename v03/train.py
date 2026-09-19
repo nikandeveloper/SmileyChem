@@ -18,13 +18,13 @@ PICKELED_REACTION_DATABASE_FILE_NAME = "reactions.db"
 PTH_MODEL_NAME = "model.pth"
 
 BUCKET_SIZE = 10
-BATCH_SIZE = 200
+BATCH_SIZE = 100
 
 
 CHECKPOINT_DIR = Path("checkpoint")
 CHECKPOINT_DIR.mkdir(exist_ok=True)
 
-CHECKPOINT_LENGTH = 10 * 60 #assuming time in seconds
+CHECKPOINT_LENGTH = 4 * 60 #assuming time in seconds
 
 
 starting_epoch = 0
