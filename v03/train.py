@@ -16,7 +16,9 @@ from pathlib import Path
 CSV_RAW_REACTIONS_FILE_NAME = "raw_train.csv"
 PICKELED_REACTION_DATABASE_FILE_NAME = "reactions.db"
 PTH_MODEL_NAME = "model.pth"
+
 BUCKET_SIZE = 10
+BATCH_SIZE = 200
 
 
 CHECKPOINT_DIR = Path("checkpoint")
@@ -39,7 +41,7 @@ if torch.cuda.is_available():
   print(torch.cuda.get_device_name(0))
 """
 
-device = xlam.xla_device()
+device = torch_xla.xla_device()
 
 
 reactions_file = Path(__file__).parent / PICKELED_REACTION_DATABASE_FILE_NAME
@@ -57,7 +59,7 @@ if reactions_file.is_file():
 
 else:
 
-  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, BUCKET_SIZE, db.ignore)
+  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, BUCKET_SIZE, BATCH_SIZE, db.ignore)
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
@@ -101,12 +103,12 @@ last_checkpoint = time.time()
 
 for epoch in range(EPOCHS):
   
-  examine_loss = 0
+ examine_loss = 0
   
-  for key in database.bucket_dict_reactant.keys():
-   
-   src = database.bucket_dict_reactant[key]
-   trg = database.bucket_dict_product[key]
+ for key in database.bucket_dict_reactant.keys():
+  for i, batch_reac in enumerate(database.bucket_dict_reactant[key]):  
+   src = batch_reac
+   trg = database.bucket_dict_product[key][i]
    
    optimiser.zero_grad()
 
@@ -124,7 +126,7 @@ for epoch in range(EPOCHS):
    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
    xlam.optimizer_step(optimiser)
-   xlam.mark_step()
+   torch_xla.sync()
 
    if time.time() - last_checkpoint >= CHECKPOINT_LENGTH:
      check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}.pth"
@@ -138,7 +140,7 @@ for epoch in range(EPOCHS):
      last_checkpoint = time.time()
 
 
-  print(epoch, examine_loss/len(database.bucket_dict_reactant))
+ print(epoch, examine_loss/len(database.bucket_dict_reactant))
 
 
 
