@@ -41,7 +41,7 @@ if torch.cuda.is_available():
   print(torch.cuda.get_device_name(0))
 """
 
-device = torch_xla.xla_device()
+device = torch_xla.device()
 
 
 reactions_file = Path(__file__).parent / PICKELED_REACTION_DATABASE_FILE_NAME
