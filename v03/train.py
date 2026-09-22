@@ -129,8 +129,8 @@ for epoch in range(EPOCHS):
    torch_xla.sync()
 
    if time.time() - last_checkpoint >= CHECKPOINT_LENGTH:
-     check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}.pth"
-     saved_data = {"epoch": epoch, "batch_key": key, "model_state_dict": model.state_dict(),  "optimiser_state_dict": optimiser.state_dict(), "loss": loss.item()}
+     check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}_batch_number_{i}.pth"
+     saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": model.state_dict(),  "optimiser_state_dict": optimiser.state_dict(), "loss": loss.item()}
 
      torch.save(saved_data, check_point_file)
 
