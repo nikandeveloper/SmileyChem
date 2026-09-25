@@ -18,7 +18,8 @@ PTH_MODEL_NAME = "model.pth"
 
 penalty_importance = 1
 ignoring_index = -100
-
+BUCKET_SIZE = 100
+BATCH_SIZE = 64
 
 reactions_file = Path(__file__).parent / PICKELED_REACTION_DATABASE_FILE_NAME
 model_file = Path(__file__).parent / PTH_MODEL_NAME
@@ -31,7 +32,7 @@ if reactions_file.is_file():
 
 else:
 
-  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, db.ignore)
+  database = db.Database(CSV_RAW_REACTIONS_FILE_NAME, BUCKET_SIZE, BATCH_SIZE, db.ignore)
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
