@@ -55,7 +55,7 @@ ELEMENTS = [
     if element not in ALIPHATIC
 ]
 
-
+WHOLE = ALIPHATIC + AROMATIC + SYMBOLS + NUMBERS + ELEMENTS 
 
 class SmilesReader:
 
@@ -158,8 +158,6 @@ class SmilesReader:
         )
 
 
-        
-
     def tokenise(self):
 
         self.tokens = []
@@ -169,6 +167,17 @@ class SmilesReader:
             self.read_atom()
 
         return self.tokens
+
+
+    @staticmethod
+    def detokenise(smiles_list):
+        smiles = ""
+        for i in smiles_list:
+           smiles += WHOLE[i]
+
+        return smiles   
+
+
 
     @staticmethod
     def vocab_size():
