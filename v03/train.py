@@ -111,8 +111,8 @@ else:
 
 
 model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
-optimiser = torch.optim.Adam(model.parameters(), lr=0.005)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, mode="min", factor=0.5, patience=0, threshold=0.0001, threshold_mode="rel", cooldown=2, min_lr=0.000001)
+optimiser = torch.optim.Adam(model.parameters(), lr=0.001)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, mode="min", factor=0.8, patience=2, threshold=0.0001, threshold_mode="rel", cooldown=2, min_lr=0.000001)
 
 if model_file.is_file():
   try:
