@@ -111,7 +111,8 @@ else:
 
 
 model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
-optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimiser = torch.optim.Adam(model.parameters(), lr=0.005)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, mode="min", factor=0.5, patience=0, threshold=0.0001, theshold_mode="rel", cooldown=2, min_lr=0.000001)
 
 if model_file.is_file():
   try:
@@ -119,6 +120,7 @@ if model_file.is_file():
     model.load_state_dict(state_dict["model_state_dict"])
     model = model.to(device)
     optimiser.load_state_dict(state_dict["optimiser_state_dict"])
+    scheduler.load_state_dict(state_dict["scheduler_state_dict"])
     starting_batch_key = state_dict["batch_key"]
     starting_batch_element = state_dict["batch_number"]
     starting_epoch = state_dict["epoch"]
@@ -155,7 +157,7 @@ for epoch in range(starting_epoch, EPOCHS):
 
   for i, batch_reac in enumerate(database.bucket_dict_reactant[key]):  
 
-    if epoch == starting_epoch and (starting_batch_key == key  and starting_batch_element >= i):
+   if epoch == starting_epoch and (starting_batch_key == key  and starting_batch_element >= i):
       continue
 
    src = batch_reac
@@ -169,6 +171,8 @@ for epoch in range(starting_epoch, EPOCHS):
    logits = model.train_step(src, trg)
 
    loss = criteron(logits.transpose(1,2), trg[:, 1:])
+
+   scheduler.step(loss)
 
    examine_loss += loss.item()
 
@@ -184,7 +188,7 @@ for epoch in range(starting_epoch, EPOCHS):
 
      cpu_state_dict = {name: p.detach().cpu() for name, p in model.state_dict().items()}
 
-     saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": optimiser.state_dict(), "loss": loss.item()}
+     saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": optimiser.state_dict(), "scheduler_state_dict": scheduler.state_dict(), "loss": loss.item()}
 
      torch.save(saved_data, check_point_file)
 
