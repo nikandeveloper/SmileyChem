@@ -54,7 +54,7 @@ best_name = ""
 
 files_nums = []
 
-best_nums = [-1, -1, -1]
+best_nums = (-1, -1, -1)
 
 
 for name in files:
