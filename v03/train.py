@@ -119,10 +119,17 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, mode="min", fa
 
 if model_file.is_file():
   try:
-    state_dict = torch.load(model_file, weights_only=False)
+    state_dict = torch.load(model_file, map_location="cpu", weights_only=False)
     model.load_state_dict(state_dict["model_state_dict"])
     model = model.to(device)
     optimiser.load_state_dict(state_dict["optimiser_state_dict"])
+
+
+    for state in optimiser.state.values():
+      for key, value in state.items():
+        if torch.is_tensor(value):
+          state[key] = value.to(device)
+
     scheduler.load_state_dict(state_dict["scheduler_state_dict"])
     starting_batch_key = state_dict["batch_key"]
     starting_batch_element = state_dict["batch_number"]
@@ -190,6 +197,12 @@ for epoch in range(starting_epoch, EPOCHS):
      check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}_batch_number_{i}.pth"
 
      cpu_state_dict = {name: p.detach().cpu() for name, p in model.state_dict().items()}
+
+     for state in optimiser.state.values():
+      for key, value in state.items():
+        if torch.is_tensor(value):
+          state[key] = value.cpu()
+
 
      saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": optimiser.state_dict(), "scheduler_state_dict": scheduler.state_dict(), "loss": loss.item()}
 
