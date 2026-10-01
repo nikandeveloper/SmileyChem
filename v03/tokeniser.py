@@ -173,7 +173,7 @@ class SmilesReader:
     def detokenise(token_ids: list[int], padding: int, EOS: int, SOS: int) -> str:
         smiles = ""
 
-        irreguler = {padding: "PAD", EOS: "EOS", SOS: "SOS"}
+        irregular = {padding: "PAD", EOS: "EOS", SOS: "SOS"}
 
         for i in token_ids:
            if i in irregular:
