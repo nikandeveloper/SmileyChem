@@ -34,7 +34,7 @@ class Encoder(nn.Module):
     self.rnn = DeepRNN(input_size, hidden_size, hidden_n, embedding_size)
 
 
-  def forward(self, x, h):
+  def forward(self, x, h, mask):
     outputs = []
 
     for t in range(x.size(1)):
@@ -174,7 +174,7 @@ class Seq2Seq(nn.Module):
      mask = src == self.pad_token
     
      all_hidden_normal = self.encoder(src, h, mask)
-     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask)
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask.flip(1))
      all_hidden_reverse = all_hidden_reverse.flip(1)
 
 
@@ -197,7 +197,7 @@ class Seq2Seq(nn.Module):
      outputs = []
 
      for _ in range(500):
-      context = self.attention(all_hidden, h)
+      context = self.attention(all_hidden, h, mask)
       h, logits = self.decoder(h, decoder_input, context)
       outputs.append(logits)
 
@@ -211,7 +211,7 @@ class Seq2Seq(nn.Module):
      mask = src == self.pad_token
      
      all_hidden_normal = self.encoder(src, h, mask)
-     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask)
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask.flip(1))
      all_hidden_reverse = all_hidden_reverse.flip(1)
 
 
@@ -231,7 +231,7 @@ class Seq2Seq(nn.Module):
      outputs = []
 
      for t in range(1, trg.size(1)):
-        context = self.attention(all_hidden, h)
+        context = self.attention(all_hidden, h, mask)
         h, logits = self.decoder(h, decoder_input, context)
         outputs.append(logits)
 
