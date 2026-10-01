@@ -86,7 +86,7 @@ for u in range(len(database.reactions)):
 
   loss = loss + (abs(d)+d)/(2*vocab_size)
 
-  smiles = t.SmilesReader.detokenise(logits.argmax(dim=-1))
+  smiles = t.SmilesReader.detokenise(logits.argmax(dim=-1).tolist())
 
   valid = True
   separate_logits = smiles.split(".")
