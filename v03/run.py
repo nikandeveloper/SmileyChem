@@ -66,20 +66,20 @@ top_1 = 0
 
 for u in range(len(database.reactions)):
   src = database.reactions[u].reactants_tokens.unsqueeze(0)
-  trg = torch.cat([torch.tensor([vocab_size]),database.reactions[u].products_tokens, torch.tensor([vocab_size+1])])
+  trg = torch.cat([torch.tensor([vocab_size]),database.reactions[u].products_tokens, torch.tensor([vocab_size+1])]).unsqueeze(0)
 
-  logits = model.forward(src)[0]
+  logits = model.forward(src)
   
-  d = logits.shape[0] - trg[1:].shape[0]
+  d = logits.shape[1] - trg[:, 1:].shape[0]
 
   factor = d > 0
  
   if factor:
-    pad = torch.full((logits.shape[0] - trg[1:].shape[0],), -100, dtype=trg.dtype, device=trg.device)
-    padded = torch.cat([trg[1:], pad])
+    pad = torch.full((logits.shape[1] - trg[:, 1:].shape[0],), vocab_size + 2, dtype=trg.dtype, device=trg.device)
+    padded = torch.cat([trg[:, 1:], pad])
     new_target = padded
   else:
-    cut = trg[1:logits.shape[0] + 1]
+    cut = trg[:, 1:logits.shape[1] + 1]
     new_target = cut
 
   loss = criteron(logits, new_target)
