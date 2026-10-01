@@ -45,7 +45,7 @@ else:
 
 vocab_size = t.SmilesReader.vocab_size()
 
-model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
+model = md.Seq2Seq(vocab_size+3, 256, 3, 256, vocab_size, vocab_size+1, vocab_size+2)
 
 if model_file.is_file():
   try:
