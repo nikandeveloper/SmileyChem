@@ -55,7 +55,7 @@ ELEMENTS = [
     if element not in ALIPHATIC
 ]
 
-WHOLE = ALIPHATIC + AROMATIC + SYMBOLS + NUMBERS + ELEMENTS 
+WHOLE = ALIPHATIC + ELEMENTS + AROMATIC + SYMBOLS + NUMBERS 
 
 class SmilesReader:
 
@@ -170,13 +170,18 @@ class SmilesReader:
 
 
     @staticmethod
-    def detokenise(smiles_list):
+    def detokenise(token_ids: list[int], padding: int, EOS: int, SOS: int) -> str:
         smiles = ""
-        for i in smiles_list:
-           smiles += WHOLE[i]
 
-        return smiles   
+        irreguler = {padding: "PAD", EOS: "EOS", SOS: "SOS"}
 
+        for i in token_ids:
+           if i in irregular:
+              smiles += f",{irregular[i]},"
+           else:
+              smiles += WHOLE[i]
+
+        return smiles
 
 
     @staticmethod
