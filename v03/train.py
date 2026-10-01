@@ -97,7 +97,7 @@ else:
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
-  database.bucket_batch(-100)
+  database.bucket_batch(ignoring_index)
 
   with open(reactions_file, "wb") as file:
    
@@ -107,7 +107,7 @@ else:
 
 
 
-model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1, vocab_size + 2)
+model = md.Seq2Seq(vocab_size+3, 256, 3, 256, vocab_size, vocab_size+1, vocab_size + 2)
 
 model = model.to(device)
 
