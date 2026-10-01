@@ -38,7 +38,8 @@ class Encoder(nn.Module):
     outputs = []
 
     for t in range(x.size(1)):
-      h = self.rnn(x[:, t], h)
+      calced_h = self.rnn(x[:, t], h)
+      h = torch.where(~mask[:, t].unsqueeze(1), calced_h, h)
       outputs.append(h)
  
     return torch.stack(outputs, dim=1)
@@ -58,7 +59,7 @@ class Attention(nn.Module):
       self.Lcontext = nn.Linear(hidden_size * 2, hidden_size)
 
 
-   def forward(self, hiddens, st):
+   def forward(self, hiddens, st, mask):
       c_st = self.Lst(st)
 
       c_h = self.Lh(hiddens)
@@ -68,6 +69,8 @@ class Attention(nn.Module):
       activated = torch.tanh(combined)
 
       scores = self.Lv(activated).squeeze(-1)
+
+      scores = scores.maskfilled(mask, float("-inf"))
      
       scores = torch.softmax(scores, dim=1)
 
@@ -126,7 +129,8 @@ class Seq2Seq(nn.Module):
     hidden_n,
     embedding_size,
     sos_token,
-    eos_token
+    eos_token,
+    pad_token
   ):
      
      super().__init__()
@@ -155,7 +159,8 @@ class Seq2Seq(nn.Module):
 
      self.hidden_size = hidden_size
      self.sos_token = sos_token
-     self.eos_token = eos_token     
+     self.eos_token = eos_token
+     self.pad_token = pad_token
 
      self.decoding_init = nn.Linear(2 * hidden_size, hidden_size)
 
@@ -165,15 +170,23 @@ class Seq2Seq(nn.Module):
         self.hidden_size,
         device=src.device 
      )
-     
-     all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder_backward(src.flip(1), h)
+    
+     mask = src == self.pad_token
+    
+     all_hidden_normal = self.encoder(src, h, mask)
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask)
      all_hidden_reverse = all_hidden_reverse.flip(1)
 
 
      all_hidden = torch.cat((all_hidden_normal, all_hidden_reverse), dim=-1)
+
+     lens = (~mask).sum(dim=1)
+
+     last_hid = lens - 1
+
+     batch_nums = torch.arange(src.size(0), device=src.device)
      
-     h = self.decoding_init(all_hidden[:, -1, :])
+     h = self.decoding_init(all_hidden[batch_nums, last_hid, :])
 
      decoder_input = torch.full(
         (src.size(0),),
@@ -195,16 +208,23 @@ class Seq2Seq(nn.Module):
   def train_step(self, src, trg):
      h = torch.zeros(src.size(0) ,self.hidden_size, device=src.device)
 
+     mask = src == self.pad_token
      
-     all_hidden_normal = self.encoder(src, h)
-     all_hidden_reverse = self.encoder_backward(src.flip(1), h)
+     all_hidden_normal = self.encoder(src, h, mask)
+     all_hidden_reverse = self.encoder_backward(src.flip(1), h, mask)
      all_hidden_reverse = all_hidden_reverse.flip(1)
 
 
      all_hidden = torch.cat((all_hidden_normal, all_hidden_reverse), dim=-1)
      
-         
-     h = self.decoding_init(all_hidden[:, -1, :])
+     
+     lens = (~mask).sum(dim=1)
+
+     last_hid = lens - 1
+
+     batch_nums = torch.arange(src.size(0), device=src.device)
+     
+     h = self.decoding_init(all_hidden[batch_nums, last_hid, :])
 
      decoder_input = trg[:, 0]
 
