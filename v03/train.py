@@ -32,9 +32,6 @@ starting_batch_key = 0
 starting_batch_element = 0
 EPOCHS = 100
 
-ignoring_index = -100
-
-
 
 """device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -85,6 +82,7 @@ model_file = folder / "checkpoint" / PTH_MODEL_NAME
 vocab_size = t.SmilesReader.vocab_size()
 
 
+ignoring_index = vocab_size + 2
 
 
 if reactions_file.is_file():
@@ -99,7 +97,6 @@ else:
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
-  database.add_marking_codes(vocab_size + 1, vocab_size)
   database.bucket_batch(-100)
 
   with open(reactions_file, "wb") as file:
@@ -110,7 +107,7 @@ else:
 
 
 
-model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1)
+model = md.Seq2Seq(vocab_size+2, 256, 3, 256, vocab_size, vocab_size+1, vocab_size + 2)
 
 model = model.to(device)
 
@@ -144,12 +141,8 @@ else:
 
 
 
-
-
 criteron = nn.CrossEntropyLoss(ignore_index=ignoring_index)
 
-
-model.train()
 
 
 last_checkpoint = time.time()
