@@ -47,16 +47,6 @@ class Database:
         continue
 
 
-  def add_marking_codes(self, EOS, SOS):
-    for key in self.bucket_dict_reactant.keys():
-      for i, element in enumerate(self.bucket_dict_product[key]):
-        self.bucket_dict_product[key][i] = torch.cat([
-          element.new_full((element.size(0), 1), SOS),
-          element,    
-          element.new_full((element.size(0), 1), EOS)
-        ], dim=1)
-   
-
   def bucket_batch(self, padding: int):
     for reaction in self.reactions:
       key = self.index_bucket(reaction.max_len)
@@ -64,7 +54,7 @@ class Database:
       self.len_bucket_dict.setdefault(key, []).append(reaction.max_len)
 
     for reaction in self.reactions:
-      reaction.padded_tokens = reaction.pad(padding, max(self.len_bucket_dict[reaction.key]))
+      reaction.padded_tokens = reaction.pad(padding=padding, EOS=EOS, SOS=SOS, max(self.len_bucket_dict[reaction.key]))
 
       self.add_padded_tokens(reaction.key, reaction.padded_tokens)
 
