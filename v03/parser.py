@@ -40,14 +40,14 @@ class Reaction:
         self.reagants_tokens = torch.tensor(reader_reagant.tokenise())
         self.products_tokens = torch.tensor(reader_product.tokenise())
 
-        self.max_len = max(len(self.reactants_tokens), len(self.products_tokens))
+        self.max_len = max(len(self.reactants_tokens), len(self.products_tokens) + 2)
 
         return self
 
 
     def pad(self, padding: int, size: int) -> torch.Tensor:
-        self.reactants_tokens = f.pad(self.reactants_tokens, (0, size - len(self.reactants_tokens)), value=0)
-        self.products_tokens = f.pad(self.products_tokens, (0, size - len(self.products_tokens)), value=0)
+        self.reactants_tokens = f.pad(self.reactants_tokens, (0, size - len(self.reactants_tokens)), value=padding)
+        self.products_tokens = f.pad(torch.cat([torch.Tensor([SOS]), self.products_tokens, torch.Tensor([EOS])]), (0, size - len(self.products_tokens)), value=padding)
 
         return torch.stack([self.reactants_tokens, self.products_tokens])
 
