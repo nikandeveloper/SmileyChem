@@ -70,7 +70,7 @@ class Attention(nn.Module):
 
       scores = self.Lv(activated).squeeze(-1)
 
-      scores = scores.maskfilled(mask, float("-inf"))
+      scores = scores.masked_fill(mask, float("-inf"))
      
       scores = torch.softmax(scores, dim=1)
 
