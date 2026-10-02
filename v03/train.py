@@ -9,6 +9,7 @@ import pickle
 import time
 import torch_xla
 import torch_xla.core.xla_model as xlam
+import copy
 from pathlib import Path
 
 
@@ -191,13 +192,15 @@ for epoch in range(starting_epoch, EPOCHS):
 
      cpu_state_dict = {name: p.detach().cpu() for name, p in model.state_dict().items()}
 
-     for state in optimiser.state.values():
+     cpu_optimiser = copy.deepcopy(optimiser.state_dict())
+
+     for state in cpu_optimiser["state"].values():
       for k, value in state.items():
         if torch.is_tensor(value):
           state[k] = value.cpu()
 
 
-     saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": optimiser.state_dict(), "scheduler_state_dict": scheduler.state_dict(), "loss": loss.item()}
+     saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": cpu_optimiser, "scheduler_state_dict": scheduler.state_dict(), "loss": loss.item()}
 
      torch.save(saved_data, check_point_file)
 
