@@ -47,14 +47,14 @@ class Database:
         continue
 
 
-  def bucket_batch(self, padding: int):
+  def bucket_batch(self, padding: int, EOS: int, SOS: int):
     for reaction in self.reactions:
       key = self.index_bucket(reaction.max_len)
       reaction.key = key
       self.len_bucket_dict.setdefault(key, []).append(reaction.max_len)
 
     for reaction in self.reactions:
-      reaction.padded_tokens = reaction.pad(padding=padding, EOS=EOS, SOS=SOS, max(self.len_bucket_dict[reaction.key]))
+      reaction.padded_tokens = reaction.pad(padding=padding, EOS=EOS, SOS=SOS, size=max(self.len_bucket_dict[reaction.key]))
 
       self.add_padded_tokens(reaction.key, reaction.padded_tokens)
 
