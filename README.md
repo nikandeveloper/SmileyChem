@@ -33,7 +33,7 @@ to load, store and modify reaction databases and a run.py file to load and test 
 The v03 also now uses bucket_batching and is TPU-friendly with masking implemented. 
 
 In order to use the saved model you just load it using torch (works until model v02):
-  model = torch.load("model.pth", weights_only=False)
+    model = torch.load("model.pth", weights_only=False)
 
 In order to use the saved model (for v03) you just load it using torch however you have specifically
 load the model as there are many utils saved in the model.pth file:
