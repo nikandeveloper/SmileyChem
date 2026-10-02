@@ -97,7 +97,7 @@ else:
   database.load_data()
   database.canonicalise_mapped()
   database.tokenise()
-  database.bucket_batch(ignoring_index)
+  database.bucket_batch(ignoring_index, vocab_size + 1, vocab_size)
 
   with open(reactions_file, "wb") as file:
    
@@ -128,9 +128,9 @@ if model_file.is_file():
           state[key] = value.to(device)
 
     scheduler.load_state_dict(state_dict["scheduler_state_dict"])
-    starting_batch_key = state_dict["batch_key"]
-    starting_batch_element = state_dict["batch_number"]
-    starting_epoch = state_dict["epoch"]
+    starting_batch_key = int(state_dict["batch_key"])
+    starting_batch_element = int(state_dict["batch_number"])
+    starting_epoch = int(state_dict["epoch"])
 
   except:
     raise ValueError(f"The state dict in file {PTH_MODEL_NAME} is corrupted")
@@ -168,8 +168,8 @@ for epoch in range(starting_epoch, EPOCHS):
    
    optimiser.zero_grad()
 
-   src = src.to(device)
-   trg = trg.to(device)
+   src = src.to(device).long()
+   trg = trg.to(device).long()
 
    logits = model.train_step(src, trg)
 
@@ -192,9 +192,9 @@ for epoch in range(starting_epoch, EPOCHS):
      cpu_state_dict = {name: p.detach().cpu() for name, p in model.state_dict().items()}
 
      for state in optimiser.state.values():
-      for key, value in state.items():
+      for k, value in state.items():
         if torch.is_tensor(value):
-          state[key] = value.cpu()
+          state[k] = value.cpu()
 
 
      saved_data = {"epoch": epoch, "batch_key": key, "batch_number": i, "model_state_dict": cpu_state_dict,  "optimiser_state_dict": optimiser.state_dict(), "scheduler_state_dict": scheduler.state_dict(), "loss": loss.item()}
