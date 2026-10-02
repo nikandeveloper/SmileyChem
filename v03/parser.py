@@ -45,7 +45,7 @@ class Reaction:
         return self
 
 
-    def pad(self, padding: int, size: int) -> torch.Tensor:
+    def pad(self, padding: int, size: int, EOS: int, SOS: int) -> torch.Tensor:
         self.reactants_tokens = f.pad(self.reactants_tokens, (0, size - len(self.reactants_tokens)), value=padding)
         produc = torch.cat([torch.Tensor([SOS]), self.products_tokens, torch.Tensor([EOS])])
         self.products_tokens = f.pad(produc, (0, size - len(produc)), value=padding)
