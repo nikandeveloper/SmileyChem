@@ -17,7 +17,6 @@ PICKELED_REACTION_DATABASE_FILE_NAME = "reactions_test.db"
 PTH_MODEL_NAME = "model.pth"
 
 penalty_importance = 1
-ignoring_index = -100
 BUCKET_SIZE = 100
 BATCH_SIZE = 64
 
@@ -44,6 +43,7 @@ else:
 
 
 vocab_size = t.SmilesReader.vocab_size()
+ignoring_index = vocab_size+2
 
 model = md.Seq2Seq(vocab_size+3, 256, 3, 256, vocab_size, vocab_size+1, vocab_size+2)
 
@@ -70,19 +70,19 @@ for u in range(len(database.reactions)):
 
   logits = model.forward(src)
   
-  d = logits.shape[1] - trg[:, 1:].shape[0]
+  d = logits.shape[1] - trg[:, 1:].shape[1]
 
   factor = d > 0
  
   if factor:
-    pad = torch.full((logits.shape[1] - trg[:, 1:].shape[0],), vocab_size + 2, dtype=trg.dtype, device=trg.device)
-    padded = torch.cat([trg[:, 1:], pad])
+    pad = torch.full((1, logits.shape[1] - trg[:, 1:].shape[1]), vocab_size + 2, dtype=trg.dtype, device=trg.device)
+    padded = torch.cat([trg[:, 1:], pad], dim=1)
     new_target = padded
   else:
     cut = trg[:, 1:logits.shape[1] + 1]
     new_target = cut
 
-  loss = criteron(logits, new_target)
+  loss = criteron(logits.transpose(1,2), new_target)
 
   loss = loss + (abs(d)+d)/(2*vocab_size)
 
