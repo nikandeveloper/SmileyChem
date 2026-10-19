@@ -4,7 +4,13 @@ SmileyChem is a Seq2Seq AI model using PyTorch that predicts the result of chemi
 
 This project's goal was to see if a simple DeepRNN using an Encoder-Decoder approach could predict chemical reactions accurately.
 
+The first version (v00), a prototype, was aimed to see if such architecture even works. After some tests and research I found 
+a flaw in the architecture: Seq2Seq models tend to forget information a lot. So I tried to counter this in the newer versions 
+with a bahdanau (additive) attention (for the encoder hidden-states) and a bidirectional Encoder which serves two main jobs: first to counter the same information loss problem and second to give information from the right-side tokens while not being affected by the left-side ones yet.  
 
+In the latest version (v03) I tried to subdivide different tasks to different classes and created independent systems for
+validation and databases, which themselves are supported by smaller more primitive classes and work together to acomplish bigger more generall tasks. 
+I also implemented a Data-Caching and a Checkpoint system to save progress. Lastly i modified the model to match TPU enviroments used for training better.
 
 
 Install dependencies:
@@ -49,4 +55,4 @@ This Python-based project only uses PyTorch, rdkit and some built-in Python libr
 
 
 
-The goal of this project was only educational, and therefore this project is open-source. It currently does not have a specified license.
+The goal of this project was only educational, and therefore this project is open-source. 
