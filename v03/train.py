@@ -7,8 +7,6 @@ import validation
 import database as db
 import pickle
 import time
-import torch_xla
-import torch_xla.core.xla_model as xlam
 import copy
 from pathlib import Path
 
@@ -40,7 +38,7 @@ if torch.cuda.is_available():
   print(torch.cuda.get_device_name(0))
 """
 
-device = torch_xla.device()
+device = torch.device("tpu")
 
 folder = Path(__file__).parent
 
@@ -158,7 +156,6 @@ for epoch in range(starting_epoch, EPOCHS):
   if epoch == starting_epoch and starting_batch_key > key:
    continue
 
-
   for i, batch_reac in enumerate(database.bucket_dict_reactant[key]):  
 
    if epoch == starting_epoch and (starting_batch_key == key  and starting_batch_element >= i):
@@ -176,18 +173,13 @@ for epoch in range(starting_epoch, EPOCHS):
 
    loss = criteron(logits.transpose(1,2), trg[:, 1:])
 
-   scheduler.step(loss.item())
-
-   examine_loss += loss.item()
-
    loss.backward()
 
-   torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-
-   xlam.optimizer_step(optimiser)
-   torch_xla.sync()
+   optimiser.step()
 
    if time.time() - last_checkpoint >= CHECKPOINT_LENGTH:
+     torch.accelerator.synchronize()
+
      check_point_file = CHECKPOINT_DIR / f"model_epoch_{epoch}_batch_key_{key}_batch_number_{i}.pth"
 
      cpu_state_dict = {name: p.detach().cpu() for name, p in model.state_dict().items()}
@@ -209,7 +201,13 @@ for epoch in range(starting_epoch, EPOCHS):
 
      last_checkpoint = time.time()
 
+     torch.accelerator.synchronize()
 
+  
+   scheduler.step(loss.item())
+
+   examine_loss += loss.item()
+    
  print(epoch, examine_loss/len(database.bucket_dict_reactant))
 
 
