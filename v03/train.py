@@ -17,7 +17,7 @@ PICKELED_REACTION_DATABASE_FILE_NAME = "reactions.db"
 TRAINED_MODEL_FILE_NAME = "model.pth"
 
 BUCKET_SIZE = 100
-BATCH_SIZE = 50
+BATCH_SIZE = 32
 
 
 CHECKPOINT_DIR = Path("checkpoint")
@@ -139,9 +139,9 @@ else:
   print(f"File {PTH_MODEL_NAME} does not existing. Making new model...")
 
 
+model = torch.compile(model, backend="tpu")
 
 criteron = nn.CrossEntropyLoss(ignore_index=ignoring_index)
-
 
 
 last_checkpoint = time.time()
