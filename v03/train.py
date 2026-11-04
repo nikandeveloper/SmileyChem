@@ -116,7 +116,11 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, mode="min", fa
 if model_file.is_file():
   try:
     state_dict = torch.load(model_file, map_location="cpu", weights_only=False)
-    model.load_state_dict(state_dict["model_state_dict"])
+    uncom_model_state = {
+      key.removeprefix("_orig_mod."): value
+      for key, value in state_dict["model_state_dict"].items()
+    }
+    model.load_state_dict(uncom_model_state)
     model = model.to(device)
     optimiser.load_state_dict(state_dict["optimiser_state_dict"])
 
